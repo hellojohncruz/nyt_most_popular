@@ -1,0 +1,75 @@
+---
+title: "nyt_most_popular"
+author: "John Cruz"
+date: "2023-03-24"
+output: 
+  html_document: default
+  pdf_document: default
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Import Libraries
+
+```{r library, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(glue)
+library(jsonlite)
+library(lubridate)
+```
+
+## Connect to New York Times API
+
+Using the *httr* library, I will connect to the New York Times API to pull information on the "Most Popular" articles on the [NY Times](http://www.nytimes.com) website based on views. To keep my API key private I incorporate R Studio API *askForPassword* function.  
+
+n6mRruxy9y1R2eNF1PxBkGnzqZbtd4UG
+{rstudioapi::askForPassword('Enter NY Times API Key')}
+
+```{r connect-nyt-api}
+
+year <- 2022
+month <- 12
+api_cnxn <- fromJSON(glue("https://api.nytimes.com/svc/archive/v1/{year}/{month}.json?api-key=n6mRruxy9y1R2eNF1PxBkGnzqZbtd4UG"), flatten = TRUE)
+```
+
+## Transform JSON data into Data Frame
+
+Description
+
+```{r json-df}
+yearly_df <- 
+  as.data.frame(api_cnxn) |> 
+  janitor::clean_names() 
+```
+
+## Datetime and Columns of Interest
+
+Description
+
+```{r rename}
+yearly_df_unnest <- 
+  yearly_df |>
+  select(response_docs_pub_date, response_docs_section_name, response_docs_keywords) |> 
+  unnest(response_docs_keywords, keep_empty = TRUE, names_sep = '_') |> 
+  mutate(response_docs_pub_date = str_extract(response_docs_pub_date, "[:graph:]*(?=\\+)"))
+
+yearly_df_unnest$response_docs_pub_date <- 
+  yearly_df_unnest$response_docs_pub_date |> 
+  ymd_hms()
+
+yearly_df_unnest <-
+  yearly_df_unnest |> 
+  mutate(hourly_date = floor_date(response_docs_pub_date, unit = 'hour'))
+
+```
+
+## Title
+
+Description
+
+```{r rename}
+plot(pressure)
+```
